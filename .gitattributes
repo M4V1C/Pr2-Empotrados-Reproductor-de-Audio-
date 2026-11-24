@@ -1,0 +1,12 @@
+# Fines de linea uniformes (equipo mixto Windows/Linux)
+* text=auto eol=lf
+*.sh  text eol=lf
+*.tcl text eol=lf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.wav binary
+*.mp4 binary
+*.pdf binary
+*.sof binary
+*.rbf binary
