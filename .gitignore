@@ -53,3 +53,47 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# ===== Quartus / Platform Designer =====
+db/
+incremental_db/
+output/
+output-*/
+output_files/
+qdb/
+greybox_tmp/
+.qsys_edit/
+*.qws
+*.rpt
+*.summary
+*.smsg
+*.done
+*.sopcinfo
+*.sof
+*.pof
+*.jdi
+*.sld
+hw/*/synthesis/
+hw/*/simulation/
+
+# ===== Nios V (BSP y compilacion) =====
+bsp/
+build/
+gdbopxdriscv.ini
+
+# ===== Questa =====
+work/
+transcript
+*.wlf
+*.vstf
+sim/**/modelsim.ini
+
+# ===== Python =====
+.venv/
+__pycache__/
+*.pyc
+
+# ===== Excepciones: archivos que SI van al repo =====
+!sim/vectors/**
+!tools/**/*.hex
+!hw/**/*.hex
