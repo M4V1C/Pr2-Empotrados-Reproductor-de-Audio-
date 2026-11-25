@@ -151,7 +151,8 @@ def saturation_signal(h: list[int], reps: int = 4) -> tuple[list[int], list[int]
     #Entrada que lleva al FIR a saturar: x[n-k] = sign(h[k]) * fondo de escala
     pat = [INT16_MAX if c >= 0 else INT16_MIN for c in reversed(h)]
     left = pat * reps
-    return left, [-v for v in left]
+    # sat16: -(-32768) = 32768 no cabe en int16; se satura a 32767, se hace el fix
+    return left, [sat16(-v) for v in left]
 
 # ====================================================================================
 # ~~~ Escritura de archivos ~~~
