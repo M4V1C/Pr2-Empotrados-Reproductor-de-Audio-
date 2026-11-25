@@ -1,0 +1,27 @@
+tb_fir_pbajo | commit d2ff9a4 | 2026-11-25 13:43
+=== tb_fir_pbajo: N_TAPS=32 ===
+[PASS] fs=8000 carga y relectura de 32 coeficientes
+[PASS] fs=8000 impulso: 64 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=8000 escalon: 128 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=8000 seno_paso: 512 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=8000 seno_rechazo: 512 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=8000 ruido: 2000 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=8000 saturacion: 128 pares, 0 errores, 67 ciclos/par      , sat=1 OK
+[PASS] fs=16000 carga y relectura de 32 coeficientes
+[PASS] fs=16000 impulso: 64 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=16000 escalon: 128 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=16000 seno_paso: 512 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=16000 seno_rechazo: 512 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=16000 ruido: 2000 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=16000 saturacion: 128 pares, 0 errores, 67 ciclos/par      , sat=1 OK
+[PASS] fs=44100 carga y relectura de 32 coeficientes
+[PASS] fs=44100 impulso: 64 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=44100 escalon: 128 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=44100 seno_paso: 512 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=44100 seno_rechazo: 512 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=44100 ruido: 2000 pares, 0 errores, 67 ciclos/par                
+[PASS] fs=44100 saturacion: 128 pares, 0 errores, 67 ciclos/par      , sat=1 OK
+--------------------------------------------------------------
+Pares procesados: 10032 | errores: 0 | ciclos/par max: 67 (limite 80)
+RESULTADO: PASS
+--------------------------------------------------------------
