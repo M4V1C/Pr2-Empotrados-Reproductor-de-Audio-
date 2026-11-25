@@ -97,3 +97,5 @@ __pycache__/
 !sim/vectors/**
 !tools/**/*.hex
 !hw/**/*.hex
+*:Zone.Identifier
+sim/*.log
