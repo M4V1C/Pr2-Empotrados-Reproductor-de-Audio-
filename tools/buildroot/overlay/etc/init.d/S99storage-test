@@ -1,0 +1,33 @@
+#!/bin/sh
+# Prueba de almacenamiento: monta la SD y lista la playlist.
+# Con "autotest" en la linea de comandos del kernel, apaga la maquina al terminar.
+
+case "$1" in
+  start)
+    echo "=== PRUEBA ALMACENAMIENTO ==="
+
+    # el driver MMC sondea de forma asincrona: espera hasta 5 s por el dispositivo
+    n=0
+    while [ ! -b /dev/mmcblk0 ] && [ "$n" -lt 50 ]; do
+        sleep 0.1
+        n=$((n + 1))
+    done
+    ls -l /dev/mmcblk0* 2>&1
+
+    mkdir -p /mnt/sd
+    if mount -t vfat -o ro /dev/mmcblk0 /mnt/sd; then
+        ls /mnt/sd
+        /usr/bin/main_list /mnt/sd
+        rc=$?
+        umount /mnt/sd
+        echo "=== FIN (rc=$rc) ==="
+    else
+        echo "=== FALLO: no se pudo montar /dev/mmcblk0 ==="
+    fi
+
+    if grep -q autotest /proc/cmdline; then
+        poweroff
+    fi
+    ;;
+  *) ;;
+esac
