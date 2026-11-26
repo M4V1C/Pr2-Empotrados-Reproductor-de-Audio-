@@ -1,0 +1,34 @@
+]633;E;echo "test_filters_sw | commit $(git rev-parse --short HEAD) | $(date '+%Y-%m-%d %H:%M')";bbe33ff5-52c9-4e73-bdec-1db65b77d254]633;Ctest_filters_sw | commit 3e8f672 | 2026-11-25 17:44
+== 1. Prueba en la PC host (gcc del host) ==
+=== test_filters_sw (vectores en sim/vectors) ===
+[PASS] filters_sw_init rechaza fs invalida
+[PASS] pb fs=8000 impulso: 64 pares, 0 errores
+[PASS] pb fs=8000 escalon: 128 pares, 0 errores
+[PASS] pb fs=8000 seno_paso: 512 pares, 0 errores
+[PASS] pb fs=8000 seno_rechazo: 512 pares, 0 errores
+[PASS] pb fs=8000 ruido: 2000 pares, 0 errores
+[PASS] eco fs=8000 impulso: 3200 pares, 0 errores
+[PASS] eco fs=8000 ruido: 2400 pares, 0 errores
+[PASS] pb fs=16000 impulso: 64 pares, 0 errores
+[PASS] pb fs=16000 escalon: 128 pares, 0 errores
+[PASS] pb fs=16000 seno_paso: 512 pares, 0 errores
+[PASS] pb fs=16000 seno_rechazo: 512 pares, 0 errores
+[PASS] pb fs=16000 ruido: 2000 pares, 0 errores
+[PASS] eco fs=16000 impulso: 6400 pares, 0 errores
+[PASS] eco fs=16000 ruido: 4800 pares, 0 errores
+[PASS] pb fs=44100 impulso: 64 pares, 0 errores
+[PASS] pb fs=44100 escalon: 128 pares, 0 errores
+[PASS] pb fs=44100 seno_paso: 512 pares, 0 errores
+[PASS] pb fs=44100 seno_rechazo: 512 pares, 0 errores
+[PASS] pb fs=44100 ruido: 2000 pares, 0 errores
+[PASS] eco fs=44100 impulso: 17640 pares, 0 errores
+[PASS] eco fs=44100 ruido: 13230 pares, 0 errores
+---------------------------------------------
+Pares procesados: 57318 | errores: 0
+RESULTADO: PASS
+---------------------------------------------
+
+== 2. Revision para el Nios V/m ==
+[PASS] filters_sw.c no llama a multiplicacion/division por software
+   text	   data	    bss	    dec	    hex	filename
+    808	      6	  17696	  18510	   484e	sw/niosv/test/build/filters_sw_rv32i.o
