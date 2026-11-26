@@ -1,0 +1,16 @@
+tb_audio_dsp (humo) | commit 4cd442a | 2026-11-26 17:56
+=== tb_audio_dsp (Smoke test) ===
+[PASS] H1: ID
+[PASS] H2: valores de reset
+[PASS] H3: GAIN, FS y TRACK
+[PASS] H4: COEF[0..31] por el bus
+[PASS] H5: bypass sin espera
+    waitrequest maximo por acceso: 67 ciclos
+[PASS] H6: FIR por el bus (impulso, 64 pares)
+[PASS] H7: FRAME_CNT y TIME_CLR
+[PASS] H8: saturacion acumulada (W1C)
+[PASS] H9: ganancia
+---------------------------------------------
+Errores: 0
+RESULTADO: PASS
+---------------------------------------------
