@@ -1,0 +1,6 @@
+# Se agrega al final de configs/qemu_arm_vexpress_defconfig (las lineas posteriores ganan).
+#
+# Rootfs en RAM (initramfs): la unica ranura SD de vexpress-a9 queda libre para sd.img.
+# BR2_TARGET_ROOTFS_EXT2 is not set
+BR2_TARGET_ROOTFS_CPIO=y
+BR2_TARGET_ROOTFS_CPIO_GZIP=y
