@@ -104,3 +104,4 @@ sim/*.log
 *.img
 # "*.d" (dependencias de gcc) tambien atrapa el directorio init.d del overlay de Buildroot
 !tools/buildroot/overlay/etc/init.d/
+sim/virtuals.do
