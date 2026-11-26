@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "../playlist.h"
+#include "../track_reader.h"
 #include "../wav_meta.h"
 
 static int failures, checks;
@@ -33,7 +34,14 @@ typedef struct {
     int list_pos;
     const char *title, *artist, *album;
     uint32_t claim_extra; /* bytes extra declarados en 'data' y no escritos */
+    int pattern;          /* 1: muestras = pattern_sample(i); 0: ceros */
 } spec_t;
+
+/* i-esima muestra de 16 bits del archivo (en orden de archivo: L, R, L, R...) */
+static uint16_t pattern_sample(uint32_t i)
+{
+    return (uint16_t)(i * 31u + 7u);
+}
 
 static void w16(FILE *f, uint16_t v) { fputc(v & 255, f); fputc(v >> 8, f); }
 static void w32(FILE *f, uint32_t v) { w16(f, v & 0xFFFF); w16(f, (uint16_t)(v >> 16)); }
@@ -95,8 +103,13 @@ static void write_wav(const char *path, const spec_t *s)
     if (s->list_pos == LIST_BEFORE_DATA)
         write_list(f, s);
     wid(f, "data"); w32(f, bytes + s->claim_extra);
-    for (i = 0; i < bytes; i++)
-        fputc(0, f);
+    if (s->pattern) {
+        for (i = 0; i < bytes / 2; i++)
+            w16(f, pattern_sample(i));
+    } else {
+        for (i = 0; i < bytes; i++)
+            fputc(0, f);
+    }
     if (bytes & 1)
         fputc(0, f);
     if (s->list_pos == LIST_AFTER_DATA)
@@ -266,6 +279,88 @@ static void test_playlist(const char *dir)
     free(pl);
 }
 
+/* Lee toda la cancion con tamanos de bloque irregulares, compara cada trama con la que
+ * produce el patron (estereo o mono duplicado) y cuenta las distintas en *mal.
+ * Devuelve el total de tramas leidas. */
+static uint32_t leer_y_comparar(track_reader_t *r, uint32_t *mal, int estereo)
+{
+    static const size_t pasos[] = {1000, 7, 2999, 1, 512};
+    uint32_t buf[3000], k = 0;
+    size_t paso = 0, n, j;
+
+    *mal = 0;
+    while ((n = track_read(r, buf, pasos[paso++ % 5])) > 0) {
+        for (j = 0; j < n; j++, k++) {
+            uint32_t esp = estereo
+                ? (uint32_t)pattern_sample(2 * k) | ((uint32_t)pattern_sample(2 * k + 1) << 16)
+                : (uint32_t)pattern_sample(k) | ((uint32_t)pattern_sample(k) << 16);
+
+            if (buf[j] != esp)
+                (*mal)++;
+        }
+    }
+    return k;
+}
+
+static void test_track_reader(const char *dir)
+{
+    char p[1024];
+    wav_info_t info;
+    track_reader_t r;
+    uint32_t buf[100], mal;
+    spec_t s = base_spec();
+
+    /* estereo: bloques irregulares, orden L/R, fin de cancion */
+    s.rate = 16000; s.channels = 2; s.frames = 5000; s.pattern = 1;
+    snprintf(p, sizeof p, "%s/r_st.wav", dir);
+    write_wav(p, &s);
+    CHECK(wav_parse_file(p, &info) == WAV_OK);
+    CHECK(track_open(&r, p, &info) == 0);
+    CHECK(r.total_frames == 5000);
+    CHECK(leer_y_comparar(&r, &mal, 1) == 5000);
+    CHECK(mal == 0);
+    CHECK(r.error == TRACK_ERR_NONE);
+    CHECK(track_read(&r, buf, 10) == 0); /* ya termino */
+
+    /* seek: a 10 tramas del final y al inicio */
+    CHECK(track_seek(&r, 4990) == 0);
+    CHECK(track_read(&r, buf, 100) == 10);
+    CHECK(buf[0] == ((uint32_t)pattern_sample(2 * 4990) | ((uint32_t)pattern_sample(2 * 4990 + 1) << 16)));
+    CHECK(track_seek(&r, 5000) == 0);
+    CHECK(track_read(&r, buf, 10) == 0);
+    CHECK(track_seek(&r, 5001) == -1);
+    CHECK(track_seek(&r, 0) == 0);
+    CHECK(leer_y_comparar(&r, &mal, 1) == 5000 && mal == 0);
+    track_close(&r);
+
+    /* mono: cada muestra se duplica en L y R */
+    s.channels = 1; s.frames = 3001;
+    snprintf(p, sizeof p, "%s/r_mono.wav", dir);
+    write_wav(p, &s);
+    CHECK(wav_parse_file(p, &info) == WAV_OK);
+    CHECK(track_open(&r, p, &info) == 0);
+    CHECK(r.total_frames == 3001);
+    CHECK(leer_y_comparar(&r, &mal, 0) == 3001);
+    CHECK(mal == 0);
+    track_close(&r);
+
+    /* archivo cortado despues de parsear la cabecera: entrega lo que hay y marca el error */
+    s.channels = 2; s.frames = 5000;
+    snprintf(p, sizeof p, "%s/r_cut.wav", dir);
+    write_wav(p, &s);
+    CHECK(wav_parse_file(p, &info) == WAV_OK);
+    CHECK(truncate(p, (off_t)info.data_offset + 4000) == 0); /* 1000 tramas */
+    CHECK(track_open(&r, p, &info) == 0);
+    CHECK(leer_y_comparar(&r, &mal, 1) == 1000);
+    CHECK(r.error == TRACK_ERR_TRUNCATED);
+    track_close(&r);
+
+    /* errores de apertura */
+    CHECK(track_open(&r, "/no/existe.wav", &info) == -1);
+    info.bits_per_sample = 8;
+    CHECK(track_open(&r, p, &info) == -1);
+}
+
 int main(void)
 {
     char dir[] = "/tmp/storage_test_XXXXXX";
@@ -283,6 +378,7 @@ int main(void)
     test_bad_files(dir);
     test_truncated_data(dir);
     test_playlist(dir);
+    test_track_reader(dir);
 
     snprintf(cmd, sizeof cmd, "rm -rf '%s'", dir);
     if (system(cmd) != 0)
