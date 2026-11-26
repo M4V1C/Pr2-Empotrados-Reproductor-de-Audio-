@@ -10,10 +10,12 @@ Escuela de Ingeniería en Computadores. Reproductor de audio WAV sobre una Alter
 
 ## Integrantes
 
-| Nombre | Carné | Rol |
-|---|---|---|
-| Jeremy Serracin Oporta | 2022164175 | Software (almacenamiento) |
-| *(por confirmar)* | | |
+| Nombre | GitHub |
+|---|---|
+| Fabiola Meléndez Sequeira | [@f4bms](https://github.com/f4bms) |
+| Irene Muñoz Castro | [@irefut](https://github.com/irefut) |
+| Jeremy Serracin Oporta | [@JeremySO202](https://github.com/JeremySO202) |
+| Marco Villatoro Chacón | [@M4V1C](https://github.com/M4V1C) |
 
 ## Arquitectura propuesta
 
