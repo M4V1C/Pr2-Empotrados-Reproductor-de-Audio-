@@ -53,9 +53,12 @@ definir**; no se documenta aquí hasta que exista.
 ├── sw/storage/              Biblioteca de almacenamiento (C11, solo stdio/POSIX)
 │   ├── wav_meta.[ch]        Parser RIFF/WAV + LIST/INFO
 │   ├── playlist.[ch]        Escaneo de directorio, orden y respaldo de metadatos
+│   ├── track_reader.[ch]    Lectura de muestras: tramas estéreo de 32 bits para el Nios V
 │   ├── main_list.c          Programa de prueba: imprime la playlist
-│   ├── tests/test_storage.c Pruebas unitarias (31 verificaciones)
-│   └── Makefile
+│   ├── main_read.c          Prueba de aceptación: lee todas las canciones y mide MB/s
+│   ├── tests/test_storage.c Pruebas unitarias (58 verificaciones)
+│   ├── README.md            Guía de integración (API, formato de SD, cómo probar)
+│   └── Makefile             Incluye `make dist` (paquete ARM para quien integre)
 ├── tools/
 │   ├── gen_wavs.py          Genera 11 WAV sintéticos con metadatos
 │   ├── mk_sdimg.sh          Arma una imagen FAT32 de SD sin root
@@ -80,7 +83,9 @@ Todos los comandos se ejecutan desde la raíz del repositorio.
 
 | Objetivo | Comando | Resultado |
 |---|---|---|
-| Pruebas unitarias (PC) | `make -C sw/storage test` | `31 verificaciones, 0 fallos` |
+| Pruebas unitarias (PC) | `make -C sw/storage test` | `58 verificaciones, 0 fallos` |
+| Leer las muestras (PC / ARM) | `make -C sw/storage read` · `read-arm` | `11 cancion(es), 0 con fallo` |
+| Paquete para integrar (ARM) | `make -C sw/storage dist` | `sw/storage/build/storage-hps.tar.gz` |
 | WAV de prueba + imagen SD | `make -C sw/storage sdimg` | `sw/storage/build/sd.img` (FAT32, 256 MB disperso) |
 | Listar playlist (PC) | `make -C sw/storage list` | Tabla de canciones |
 | Listar playlist (ARM, `qemu-arm`) | `make -C sw/storage list-arm` | Misma tabla, binario ARM estático |
@@ -149,7 +154,7 @@ La canción 11 no tiene `LIST/INFO`: título y artista salen del nombre de archi
 
 | Prueba | Entorno | Qué valida |
 |---|---|---|
-| `make test` | PC x86_64 | Lógica del parser y la playlist (31 verificaciones) |
+| `make test` | PC x86_64 | Lógica del parser, la playlist y el lector de muestras (58 verificaciones) |
 | `make list-arm` | `qemu-arm` (usuario) | Código en ARM de 32 bits: tipos, `off_t`, endianness |
 | `run_qemu.sh` | `qemu-system-arm`, Linux real | Driver MMC, montaje FAT32, nombres largos |
 
@@ -169,7 +174,8 @@ La canción 11 no tiene `LIST/INFO`: título y artista salen del nombre de archi
 - [x] Parser WAV con `LIST/INFO` y duración
 - [x] Playlist con respaldo por nombre
 - [x] Pruebas unitarias, ARM en modo usuario y Linux completo en QEMU
-- [ ] Reproducción: lectura por bloques hacia el buffer compartido
+- [x] Lectura de muestras por bloques (`track_reader`) y paquete `make dist` para integrar
+- [ ] Envío de las muestras al Nios V (buffer compartido y comandos): a cargo de quien conecte HPS↔Nios V
 - [ ] Interfaz HPS↔Nios V (mailbox, buffer circular, mapa de memoria)
 - [ ] Botones por interrupción y UI (LCD/VGA/TFT)
 - [ ] Kernel y device tree para la DE1-SoC; prueba en la placa
