@@ -15,7 +15,7 @@ vlib work
 vlog -quiet ../hw/ip/audio_dsp/fir_pbajo.v
 vlog -quiet -sv tb_fir_pbajo.sv
 if [ "${1:-}" = "gui" ]; then
-    vsim tb_fir_pbajo -voptargs=+acc -do "add wave -radix decimal /tb_fir_pbajo/dut/*; run -all"
+    vsim tb_fir_pbajo -voptargs=+acc -do wave_fir_pbajo.do
 else
     vsim -c tb_fir_pbajo -do "run -all; quit -f" | tee fir_pbajo.log
     echo
