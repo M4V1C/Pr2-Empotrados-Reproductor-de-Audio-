@@ -1,0 +1,9 @@
+tb_ganancia | commit 4cd442a | 2026-11-26 17:56
+=== tb_ganancia ===
+[PASS] C1: casos de borde
+[PASS] C2: gain = 4096 es x1.0 exacto
+[PASS] C3/C4: 20000 pares aleatorios (valor y bandera sat)
+-------------------------------------------------
+Pruebas: 20776 | errores: 0
+RESULTADO: PASS
+------------------------------------------------
