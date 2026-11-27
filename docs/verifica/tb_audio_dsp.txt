@@ -1,0 +1,49 @@
+tb_audio_dsp | commit 5316a43 | 2026-11-26 20:33
+=== tb_audio_dsp ===
+[PASS] TC1: ID
+[PASS] TC2: bypass sin espera (2000 pares)
+[PASS] TC3: respuesta al impulso y relectura de COEF (fs=8000)
+[PASS] TC4: escalon y senos contra el modelo (fs=8000)
+[PASS] TC5: ruido, 2000 pares bit a bit (fs=8000)
+[PASS] TC3: respuesta al impulso y relectura de COEF (fs=16000)
+[PASS] TC4: escalon y senos contra el modelo (fs=16000)
+[PASS] TC5: ruido, 2000 pares bit a bit (fs=16000)
+[PASS] TC3: respuesta al impulso y relectura de COEF (fs=44100)
+[PASS] TC4: escalon y senos contra el modelo (fs=44100)
+[PASS] TC5: ruido, 2000 pares bit a bit (fs=44100)
+    pares por el FIR en TC3-TC5: 9648
+[PASS] TC6: saturacion acumulada (general y W1C)
+    sin HIST_CLR: 31 de 64 pares distintos (esperado)
+[PASS] TC7: HIST_CLR y recarga de coeficientes
+    waitrequest máximo por acceso: 67 ciclos
+[PASS] TC8: (a) SAMPLE_OUT nunca devuelve un dato viejo (0..70 ciclos)
+[PASS] TC8: (b) STATUS.BUSY se lee sin espera
+[PASS] TC8: (c) escribir SAMPLE_IN o COEF durante el calculo espera
+[PASS] TC9: GAIN sobre el FIR (x0.5, silencio, x1) y saturacion
+[PASS] TC10: (a) FRAME_CNT y TIME_CLR
+    TIME = 00:00 tras 61 s: time_7seg todavía falta
+[PEND] TC10: (b) TIME MM:SS (time_7seg)
+-----------------------------------------
+[PASS] TC1: ID
+[PASS] TC2: bypass sin espera (2000 pares)
+[PASS] TC3: respuesta al impulso y relectura de COEF (fs=8000)
+[PASS] TC4: escalon y senos contra el modelo (fs=8000)
+[PASS] TC5: ruido, 2000 pares bit a bit (fs=8000)
+[PASS] TC3: respuesta al impulso y relectura de COEF (fs=16000)
+[PASS] TC4: escalon y senos contra el modelo (fs=16000)
+[PASS] TC5: ruido, 2000 pares bit a bit (fs=16000)
+[PASS] TC3: respuesta al impulso y relectura de COEF (fs=44100)
+[PASS] TC4: escalon y senos contra el modelo (fs=44100)
+[PASS] TC5: ruido, 2000 pares bit a bit (fs=44100)
+[PASS] TC6: saturacion acumulada (general y W1C)
+[PASS] TC7: HIST_CLR y recarga de coeficientes
+[PASS] TC8: (a) SAMPLE_OUT nunca devuelve un dato viejo (0..70 ciclos)
+[PASS] TC8: (b) STATUS.BUSY se lee sin espera
+[PASS] TC8: (c) escribir SAMPLE_IN o COEF durante el calculo espera
+[PASS] TC9: GAIN sobre el FIR (x0.5, silencio, x1) y saturacion
+[PASS] TC10: (a) FRAME_CNT y TIME_CLR
+[PEND] TC10: (b) TIME MM:SS (time_7seg)
+-----------------------------------------
+Errores: 0 | Casos pendientes: 1
+RESULTADO: PASS
+-----------------------------------------
