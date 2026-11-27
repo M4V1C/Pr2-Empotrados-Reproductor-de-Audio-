@@ -25,9 +25,10 @@ Nios V bare-metal, donde el enunciado exige acceso directo por punteros.
 ```
  UI / reproductor  (pendiente)
         │
-  playlist.c   ── escaneo, orden, respaldo de metadatos
+  playlist.c      ── escaneo, orden, respaldo de metadatos
+  track_reader.c  ── lectura de muestras en tramas estéreo de 32 bits
         │
-  wav_meta.c   ── parser RIFF/WAV + LIST/INFO
+  wav_meta.c      ── parser RIFF/WAV + LIST/INFO
         │
   stdio (fopen/fseeko/fread)
         │
@@ -46,7 +47,21 @@ wav_status_t wav_parse_file(const char *path, wav_info_t *out);
 
 /* playlist.h */
 int playlist_scan(playlist_t *pl, const char *dir);   /* n canciones, o -1 */
+
+/* track_reader.h */
+int    track_open(track_reader_t *r, const char *path, const wav_info_t *info);
+size_t track_read(track_reader_t *r, uint32_t *dst, size_t max_frames);  /* 0 = fin */
+int    track_seek(track_reader_t *r, uint32_t frame);
+void   track_close(track_reader_t *r);
 ```
+
+`track_read` entrega **tramas estéreo de 32 bits** (`[15:0]` = L, `[31:16]` = R), el mismo
+formato que `SAMPLE_IN` de `audio_dsp`. Los WAV mono se duplican (L = R). La conversión se hace
+byte a byte en little-endian, sin depender del orden de bytes de la máquina, en bloques de 256
+tramas sobre un buffer de 1 KB en la pila. Si el archivo termina antes de lo que decía la
+cabecera, entrega lo que hay y marca `r->error = TRACK_ERR_TRUNCATED`. No conoce el transporte
+hacia el Nios V: quien lo conecte solo copia lo que devuelve. La guía de uso está en
+[`sw/storage/README.md`](../sw/storage/README.md).
 
 `wav_status_t`:
 
@@ -105,7 +120,9 @@ cargar la pila.
 
 ### 6.1 Pruebas unitarias (`tests/test_storage.c`)
 
-31 verificaciones sobre WAV sintéticos escritos en un directorio temporal:
+58 verificaciones sobre WAV sintéticos escritos en un directorio temporal. Las de
+`track_reader` usan un patrón de muestras reconocible (`i·31 + 7`) para comprobar el orden
+L/R, el mono duplicado y que ninguna trama se pierda al leer con bloques irregulares:
 
 | Prueba | Valida |
 |---|---|
@@ -141,7 +158,8 @@ El script `S99storage-test` espera a `/dev/mmcblk0`, monta la SD en solo lectura
 
 ## 7. Siguientes pasos
 
-1. Lectura por bloques de `data_offset`/`data_size` hacia un buffer circular.
+1. ~~Lectura por bloques de las muestras~~ (hecho: `track_reader`). Falta el envío al buffer
+   circular, que depende de la interfaz HPS↔Nios V (issue A-07, a cargo de otra persona).
 2. Definir con el Nios V el mailbox y el mapa de memoria compartida.
 3. Kernel y device tree para el HPS de la DE1-SoC; medir el arranque.
 4. Hilo de lectura con prioridad y manejo de fin de canción.
