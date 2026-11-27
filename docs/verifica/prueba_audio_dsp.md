@@ -9,6 +9,7 @@ Verificación **aislada** del módulo de hardware personalizado **antes de integ
 | Módulo bajo prueba (DUT) | `hw/ip/audio_dsp/audio_dsp.v` (con `fir_pbajo.v`, `ganancia.v` y `time_7seg.v`) |
 | Testbench | `sim/tb_audio_dsp.sv` |
 | Script | `sim/run_audio_dsp.sh` |
+| Formas de onda | `sim/wave_audio_dsp.do` (modo `gui` del script) |
 | Vectores de referencia | `sim/vectors/` (generados por `tools/gen_coefs.py`) |
 | Resultado de la corrida | `docs/verifica/tb_audio_dsp.txt` |
 
@@ -43,23 +44,54 @@ Verificación **aislada** del módulo de hardware personalizado **antes de integ
 
 **Resumen:** 18 casos en PASS, 1 pendiente, **0 errores**. Detalle y fecha en `tb_audio_dsp.txt`.
 
-## 4. Hallazgos durante la verificación y arreglos
+## 4. Formas de onda
+
+Las genera `sim/run_audio_dsp.sh gui` con `sim/wave_audio_dsp.do`. El `.do` corre la simulación hasta la primera lectura con `waitrequest`, pone un cursor en la subida y otro en la bajada, y deja dos marcadores (***Bookmarks***): `fir` y `bypass`.
+
+### 4.1 Transacción con el FIR (TC3, primer par del impulso a 8 kHz)
+
+![Transacción con el FIR](../img/onda_audio_dsp_fir.png)
+
+| Tiempo | Qué pasa |
+|---|---|
+| 81450 ns | Se acepta la escritura de `SAMPLE_IN` (`80017fff`): `wr_sample_in` y `fir_start` → `ocupado` = 1 y el FIR pasa a `S_MAC` |
+| 81460 ns (cursor *waitrequest sube*) | Empieza la lectura de `SAMPLE_OUT`; como el FIR está ocupado, `waitrequest` = 1 |
+| 81460–82790 ns | El FIR recorre `k` = 0…31 con `channel` = 0 (L) y otra vez con `channel` = 1 (R) |
+| Antes de 82790 ns | `fir_done` → `load_out` → `sample_out_q` = `0015ffeb` |
+| 82790 ns (cursor *waitrequest baja*) | `waitrequest` = 0 y `avs_readdata` entrega el resultado |
+
+Entre los cursores hay **1330 ns**. El maestro mira `waitrequest` en los flancos de subida, y en **66** de ellos lo encuentra en alto. Junto con el flanco que acepta la escritura, son los **67 ciclos por par** de `fir_pbajo`.
+
+> **Pulso de 1 ns en `waitrequest` (no es una espera).** En el flanco que acepta `SAMPLE_IN`, el FIR ya queda ocupado, pero el testbench todavía tiene `avs_write` = 1 hasta 1 ns después. Como `waitrequest = ocupado && (avs_write || ...)`, sube durante ese nanosegundo. Avalon solo mira `waitrequest` en los flancos de subida y la escritura ya fue aceptada, así que no tiene efecto.
+
+### 4.2 Bypass (TC1 y TC2, 0–600 ns)
+
+![Bypass](../img/onda_audio_dsp_bypass.png)
+
+- Lectura de `ID` = `41554431` y escritura de `CTRL` = 0 (bypass).
+- Pares `SAMPLE_IN` / `SAMPLE_OUT` alternados: cada escritura activa `load_out`, y la lectura siguiente devuelve el mismo valor escrito.
+- `waitrequest` se queda en **0** y el FIR en `S_IDLE` todo el tiempo.
+- Los tramos rojos antes de ~80 ns son valores indefinidos (X) **antes del reset**, que es síncrono.
+
+> En las dos capturas, la columna de valores (*Msgs*) muestra el instante del cursor activo (81460 ns), no el de la vista.
+
+## 5. Hallazgos durante la verificación y arreglos
 
 | Hallazgo | Lugar | Corrección |
 |---|---|---|
 | El vector de saturación del modelo tenía en el canal R el valor −(−32768) = +32768, lo cual no cabe en int16. El testbench del FIR lo encontró y falló: el hardware recibía −32768 y el modelo calculaba con +32768 | `tools/gen_coefs.py` | Se satura el canal R con `sat16(-v)` y se regeneraron los vectores |
 | En el ciclo en que el FIR termina (`done = 1`), `busy` ya vale 0 pero `SAMPLE_OUT` todavía no se actualizó: una lectura en ese ciclo devolvería el resultado anterior | `audio_dsp.v` | Señal `ocupado = busy OR done` para `waitrequest` y `STATUS.BUSY`. Se añade el caso para verificarlo: **TC8 (a)** |
 
-## 5. Cómo repetir la verificación?
+## 6. Cómo repetir la verificación?
 
 ```bash
 # Desde: raíz del repo (con vlib/vlog/vsim en el PATH)
 python tools/gen_coefs.py  # solo si cambiaron los parámetros de los filtros
 sim/run_audio_dsp.sh       # esta solo es por consola; genera el log en sim/audio_dsp.log
-sim/run_audio_dsp.sh gui   # esta abre el waveform
+sim/run_audio_dsp.sh gui   # esta abre el waveform (sim/wave_audio_dsp.do)
 ```
 
-## 6. Otros archivos de pruebas unitarias
+## 7. Otros archivos de pruebas unitarias
 
 | Prueba | Qué cubre | Resultado |
 |---|---|---|

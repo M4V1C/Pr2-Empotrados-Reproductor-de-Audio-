@@ -18,7 +18,7 @@ vlog -quiet ../hw/ip/audio_dsp/audio_dsp.v
 vlog -quiet -sv tb_audio_dsp.sv
 
 if [ "${1:-}" = "gui" ]; then
-    vsim tb_audio_dsp -voptargs=+acc -do "add wave -radix hex /tb_audio_dsp/dut/*; run -all"
+    vsim tb_audio_dsp -voptargs=+acc -do wave_audio_dsp.do
 else
     vsim -c tb_audio_dsp -do "run -all; quit -f" | tee audio_dsp.log
     echo
