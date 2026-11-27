@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #============================================================================
 # run_fir_pbajo.sh - Compila y simula tb_fir_pbajo en Questa (issue F-02).
 #

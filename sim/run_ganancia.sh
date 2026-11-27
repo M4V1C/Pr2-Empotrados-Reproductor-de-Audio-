@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Compila y simula tb_ganancia en Questa.
 #
 # Uso (desde cualquier carpeta; el script se mueve solo a sim/):
