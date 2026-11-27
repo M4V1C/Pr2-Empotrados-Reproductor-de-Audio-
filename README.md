@@ -43,8 +43,10 @@ flowchart LR
 | Acceso a hardware | Drivers del kernel | Punteros directos de `system.h`, sin HAL ni `IOWR/IORD` |
 | Pruebas | QEMU (esta etapa) | Questa (como en el Taller 09) |
 
-La interfaz HPS↔Nios V (mailbox, buffer circular, mapa de registros) **está pendiente de
-definir**; no se documenta aquí hasta que exista.
+La interfaz HPS↔Nios V (comandos, buffer circular, eventos de botones y mapa de la RAM
+compartida) está definida e implementada en C y verificada en **simulación en el PC**; falta
+probarla en la placa. Ver [docs/interfaz-hps-nios.md](docs/interfaz-hps-nios.md). El `main` del
+Nios solo debe llamar a la librería `sw/niosv/src/shm_nios.c`.
 
 ## Estructura del repositorio
 
@@ -59,12 +61,23 @@ definir**; no se documenta aquí hasta que exista.
 │   ├── tests/test_storage.c Pruebas unitarias (58 verificaciones)
 │   ├── README.md            Guía de integración (API, formato de SD, cómo probar)
 │   └── Makefile             Incluye `make dist` (paquete ARM para quien integre)
+├── sw/hps/                  Lado HPS de la comunicación con el Nios V
+│   ├── player.[ch]          Reproductor: estado, lista, relleno del buffer, avance automático
+│   ├── shm_hps.[ch]         RAM compartida: comandos, buffer circular y eventos
+│   ├── shm_sink.[ch]        Conecta el reproductor con el protocolo
+│   ├── tests/test_comm.c    Simulación HPS + Nios en el PC (77 verificaciones)
+│   └── Makefile             `make test` y `make nios-check`
+├── sw/niosv/src/            Software del Nios V
+│   └── shm_nios.[ch]        Lado Nios del protocolo (para el main; sin libc ni HAL)
+├── sw/common/shm_protocol.h Contrato compartido por ambos lados (offsets, comandos, eventos)
 ├── tools/
 │   ├── gen_wavs.py          Genera 11 WAV sintéticos con metadatos
 │   ├── mk_sdimg.sh          Arma una imagen FAT32 de SD sin root
 │   ├── run_qemu.sh          Arranca el Linux mínimo en QEMU con la SD
 │   └── buildroot/           Configuración de Buildroot (defconfig + overlay)
-└── docs/storage.md          Diseño detallado del módulo de almacenamiento
+└── docs/
+    ├── storage.md           Diseño detallado del módulo de almacenamiento
+    └── interfaz-hps-nios.md Protocolo HPS ↔ Nios V, guía para el main del Nios y verificación
 ```
 
 ## Requisitos
@@ -90,6 +103,8 @@ Todos los comandos se ejecutan desde la raíz del repositorio.
 | Listar playlist (PC) | `make -C sw/storage list` | Tabla de canciones |
 | Listar playlist (ARM, `qemu-arm`) | `make -C sw/storage list-arm` | Misma tabla, binario ARM estático |
 | Construir Linux mínimo | `bash tools/buildroot/build.sh` | Imágenes en `../buildroot-2025.02/output/images` |
+| Simulación HPS + Nios (PC) | `make -C sw/hps test` | `77 verificaciones, 0 fallos` |
+| Nios compila para RV32I | `make -C sw/hps nios-check RISCV_PREFIX=...` | `OK: shm_nios.c compila para RV32I...` |
 | Prueba completa en QEMU | `bash tools/run_qemu.sh` | Arranca, monta la SD, lista y apaga |
 | Consola interactiva | `bash tools/run_qemu.sh --shell` | Salir con `Ctrl-A X` |
 
@@ -176,7 +191,9 @@ La canción 11 no tiene `LIST/INFO`: título y artista salen del nombre de archi
 - [x] Pruebas unitarias, ARM en modo usuario y Linux completo en QEMU
 - [x] Lectura de muestras por bloques (`track_reader`) y paquete `make dist` para integrar
 - [ ] Envío de las muestras al Nios V (buffer compartido y comandos): a cargo de quien conecte HPS↔Nios V
-- [ ] Interfaz HPS↔Nios V (mailbox, buffer circular, mapa de memoria)
+- [x] Interfaz HPS↔Nios V: protocolo, reproductor del HPS y librería del Nios, simulados en el PC
+- [ ] `main` del Nios V (lazo de audio, ISR de botones) y RAM compartida en el `.qsys`
+- [ ] Probar la comunicación en la placa (orden de memoria ARM/RISC-V, puente HPS-FPGA, tiempos)
 - [ ] Botones por interrupción y UI (LCD/VGA/TFT)
 - [ ] Kernel y device tree para la DE1-SoC; prueba en la placa
 - [ ] Hardware personalizado, filtros DSP en HDL, 7-seg, volumen por ADC
