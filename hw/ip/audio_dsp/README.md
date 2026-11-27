@@ -11,7 +11,7 @@ Estos son los archivos que tiene:
 | `fir_pbajo.v` | Filtro pasa-bajos FIR (instanciado dentro de `audio_dsp`) |
 | `ganancia.v` | Escalamiento de volumen por canal, Q1.12 (instanciado dentro de `audio_dsp`) |
 | `time_7seg.v` | Tiempo MM:SS y displays de 7 segmentos (instanciado dentro de `audio_dsp`). **PENDIENTE**, ver sección 7 |
-| `audio_dsp_hw.tcl` | Descripción del componente para Platform Designer. **PENDIENTE** |
+| `audio_dsp_hw.tcl` | Descripción del componente para Platform Designer (interfaces, archivos). Se puede abrir y editar con el *Component Editor* |
 
 > **Acá no se asignan los pines.** Solo son las salidas con nombre (`hex0`..`hex5`). Los pines se asignan en el `.qsf` del proyecto; así si se cambian, este archivo de `audio_dsp.v` no necesita cambiar.
 
@@ -40,13 +40,34 @@ Parámetros de `avalon_slave`:
 
 ## 2. Pasos para lo del Platform Designer
 
-1. Agregar la carpeta `hw/ip/audio_dsp/` a la ruta de búsqueda de IP (*Tools → Options → IP Search Path*), o abrir el componente con *File → New Component*.
-2. Agregar **audio_dsp** al sistema.
+1. Agregar la carpeta `hw/ip/audio_dsp/` a la ruta de búsqueda de IP: *Tools → Options → IP Search Path → Add*.
+   - Quartus en Linux / WSL: `<repo>/hw/ip/audio_dsp`
+   - Quartus en Windows con el repo en WSL: `\\wsl.localhost\Ubuntu\<ruta del repo>\hw\ip\audio_dsp`. Si no aparece en el catálogo, el repo tiene que estar en una ruta de Windows.
+
+   Aparece en el *IP Catalog* como **Proyecto 2 → audio_dsp**:
+
+   ![audio_dsp en el IP Catalog](../../../docs/img/pd_catalogo.png)
+
+2. Agregar **audio_dsp** al sistema (*Add… → Finish*, no tiene parámetros).
 3. Conectar `clock` y `reset` a los mismos del Nios V.
 4. Conectar `avalon_slave` al **`data_manager`** del Nios V.
 5. Asignar una **dirección base alineada a 256 bytes** (por ejemplo `0x0001_0000`), *System → Assign Base Addresses* o a mano, no recuerdo si el profe había propuesto alguna en la especificación.
 6. En la columna *Export* del conduit **hex**, poner un nombre (por ejemplo, recomiendo `audio_dsp_hex` para mantenerlo coherente).
 7. Generar el sistema (*Generate HDL*). En `system.h` del BSP debe aparecer la base, p. ej. `AUDIO_DSP_0_BASE`.
+
+Así queda conectado en un sistema de prueba (solo reloj y reset, sin Nios). El único warning es que `avalon_slave` todavía no tiene maestro: este warning se quita al conectarlo al `data_manager` del Nios V.
+
+![audio_dsp conectado en Platform Designer](../../../docs/img/pd_audio_dsp_sistema.png)
+
+### 2.1 Revisión del componente (En Component Editor)
+
+Clic derecho sobre `audio_dsp` en el catálogo → *Edit*. Con el `audio_dsp_hw.tcl` del repo: los 4 `.v` con `audio_dsp.v` como *Top-level*, *Analyze Synthesis Files* sin errores ni advertencias, y las 4 interfaces de la sección 1.
+
+![Archivos del componente](../../../docs/img/pd_component_files.png)
+
+![Señales e interfaces del componente](../../../docs/img/pd_component_signals.png)
+
+> Si se abre en el *Component Editor* solo para revisar, cerrarlo **sin guardar**: al guardar reescribe el `.tcl` en su formato y se pierden los comentarios (el contenido es el mismo).
 
 ## 3. Conexión en el top-level
 
@@ -105,9 +126,8 @@ En esta parte lo que falta es
 | Qué | Dónde | Estado actual |
 |---|---|---|
 | Cuerpo de `time_7seg` (tiempo + displays) | `time_7seg.v`, bloque `>>> PENDIENTE` | `TIME` = 00:00, displays apagados |
-| Descripción del componente para Platform Designer: `audio_dsp_hw.tcl` | `hw/ip/audio_dsp/` (se genera con el Component Editor) | No existe todavía |
 
-La instancia en `audio_dsp.v`, los puertos, el registro `TIME` y la conexión a los pines ya están definidos, hay que montarse en ellos. Entonces al completar `time_7seg.v` **no cambia** la interfaz del componente ni el mapa de registros.
+`audio_dsp_hw.tcl` ya incluye `time_7seg.v`, así que Platform Designer no se toca. La instancia en `audio_dsp.v`, los puertos, el registro `TIME` y la conexión a los pines ya están definidos, hay que montarse en ellos. Entonces al completar `time_7seg.v` **no cambia** la interfaz del componente ni el mapa de registros.
 
 ---
 
