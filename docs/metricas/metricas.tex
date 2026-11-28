@@ -1,0 +1,101 @@
+% =====================================================================
+% docs/metricas/metricas.tex -- Bitacora de metricas de implementacion
+% Proyecto II CE-1113: reproductor de audio en DE1-SoC (P2, integracion)
+%
+% Una fila por compilacion relevante (fin de cada fase). Los datos salen
+% de hw/quartus/output_files/: de1_soc.flow.rpt (Flow Summary),
+% de1_soc.fit.rpt (Fitter RAM Summary, recursos por entidad) y
+% de1_soc.sta.rpt (Setup/Hold/Fmax). Sirve de base para T8.1-T8.3.
+% Compilar: pdflatex metricas.tex
+% =====================================================================
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\sisetup{group-separator={\,}, group-minimum-digits=4, output-decimal-marker={.}}
+\usepackage{array}
+\usepackage[hidelinks]{hyperref}
+
+\title{Métricas de implementación del SoC\\\large Proyecto II CE-1113 — Reproductor de audio en DE1-SoC}
+\author{P2 — Integración del SoC}
+\date{Última actualización: 28 de noviembre de 2026}
+
+\begin{document}
+\maketitle
+
+\section*{Condiciones}
+Quartus Prime Lite 25.1std.0 Build 1129, dispositivo Cyclone V 5CSEMA5F31C6
+(\num{32070} ALMs, \num{4065280} bits de memoria en bloque, 397 M10K, 87 DSP).
+Reloj del sistema: \texttt{CLOCK\_50}, restringido a \SI{20}{\nano\second} en
+\texttt{hw/quartus/de1\_soc.sdc}.
+
+\section{Recursos por fase (sistema completo)}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}l l r r r r r r@{}}
+\toprule
+Fase & Commit & ALMs & Registros & Bits de memoria & M10K & DSP & Pines \\
+\midrule
+1 — Nios V/m + RAM 128 KiB + JTAG UART & \texttt{0eae00a}
+  & \num{2279} (7\,\%) & \num{3113} & \num{1051648} (26\,\%) & 132 (33\,\%) & 0 & 15 \\
+\bottomrule
+\end{tabular}
+\caption{Flow Summary al cierre de cada fase.}
+\end{table}
+
+\section{Tiempos (Timing Analyzer)}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}l l r r r r@{}}
+\toprule
+Fase & Reloj & Setup slack & Hold slack & Fmax & Modelo peor caso \\
+\midrule
+1 & \texttt{CLOCK\_50}            & \SI{8.528}{\nano\second}  & \SI{0.279}{\nano\second} & \SI{87.17}{\mega\hertz} & Slow 1100mV 85C \\
+1 & \texttt{altera\_reserved\_tck} & \SI{11.460}{\nano\second} & \SI{0.374}{\nano\second} & \SI{96.03}{\mega\hertz} & Slow 1100mV 85C \\
+\bottomrule
+\end{tabular}
+\caption{Slack positivo $\Rightarrow$ el diseño cumple. Fmax es la frecuencia
+máxima de la ruta más lenta: $1/(20 - 8.528)\,\text{ns} \approx \SI{87.2}{\mega\hertz}$.}
+\end{table}
+
+\section{Desglose de la memoria en bloque (fase 1)}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}l l r@{}}
+\toprule
+Memoria & Organización & Bits \\
+\midrule
+\texttt{nios\_ram} (código, datos, pila) & $32768 \times 32$ & \num{1048576} \\
+Banco de registros del Nios V (2 copias, 2 puertos de lectura) & $2 \times (32 \times 32)$ & \num{2048} \\
+FIFO de TX y RX de la JTAG UART & $2 \times (64 \times 8)$ & \num{1024} \\
+\midrule
+Total (coincide con el Flow Summary) & & \num{1051648} \\
+\bottomrule
+\end{tabular}
+\caption{Del \emph{Fitter RAM Summary}. La ROM y los CSR del módulo de depuración
+del Nios van en MLAB (ALMs usados como memoria) y no cuentan aquí.}
+\end{table}
+
+\section{Referencia: módulo propio \texttt{audio\_dsp} aislado}
+Medido por P1 (commit \texttt{f5784ff}, \texttt{docs/verifica/recursos\_audio\_dsp.txt}),
+con los puertos como pines virtuales: \num{937} ALMs, \num{1796} registros,
+512 bits de memoria (1 M10K) y 3 DSP. Se repetirá dentro del sistema completo
+en la fase 2 para T8.1.
+
+\section{Observaciones}
+\begin{itemize}
+  \item Fase 1: la RAM del Nios es el 99.7\,\% de la memoria usada. El presupuesto
+        restante (\num{3013632} bits, unos 368 KiB) debe cubrir la RAM compartida
+        de 64 KiB, las FIFO de audio y el buffer del eco.
+\end{itemize}
+
+\end{document}

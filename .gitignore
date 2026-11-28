@@ -111,3 +111,11 @@ sim/virtuals.do
 hw/quartus/soc_system/
 hw/quartus/nios_ram.hex
 hw/quartus/*.qws
+
+# Volcado de modelo de pines que deja Quartus
+hw/quartus/c5_pin_model_dump.txt
+# Salidas de LaTeX
+docs/metricas/*.aux
+docs/metricas/*.log
+docs/metricas/*.out
+docs/metricas/*.pdf

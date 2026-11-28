@@ -1,6 +1,5 @@
 // =====================================================================
-// de1_soc_top.v -- Tope del diseno en la DE1-SoC (Proyecto II CE-1113)
-//
+// de1_soc_top.v -- Tope del diseno en la DE1-SoC
 // El tope es el "cableado" entre los pines fisicos de la tarjeta y el
 // sistema generado por Platform Designer (soc_system). Los nombres de
 // los puertos coinciden con los del .qsf (CLOCK_50, KEY, LEDR, ...).
