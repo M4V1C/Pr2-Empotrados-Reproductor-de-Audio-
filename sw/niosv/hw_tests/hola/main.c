@@ -7,18 +7,21 @@
  * Imprime cada segundo para que el mensaje se vea aunque la terminal se
  * abra despues de configurar la FPGA.
  *
- * El tiempo se mide con el CSR mcycle de RISC-V (cuenta ciclos de reloj
- * a 50 MHz): no usa alt_*, IOWR/IORD ni usleep.
+ * El tiempo se mide con el registro mtime del timer_sw_agent (cuenta a
+ * 50 MHz): no usa alt_*, IOWR/IORD ni usleep.
  */
 #include <stdio.h>
 #include <stdint.h>
 #include "system.h"
 
+/* Tiempo en ciclos de 50 MHz: parte baja del registro mtime del
+ * timer_sw_agent del Nios V (memoria, no CSR). El Nios V/m no implementa
+ * el CSR mcycle: leerlo causa una excepcion de instruccion ilegal. */
+#define MTIME_LO (*(volatile uint32_t *)(CPU_TIMER_SW_AGENT_BASE + 0))
+
 static inline uint32_t ciclos(void)
 {
-    uint32_t c;
-    __asm__ volatile ("csrr %0, mcycle" : "=r"(c));
-    return c;
+    return MTIME_LO;
 }
 
 int main(void)
@@ -33,7 +36,7 @@ int main(void)
     unsigned n = 0;
 
     for (;;) {
-        /* La resta sin signo funciona aunque mcycle (32 bits bajos)
+        /* La resta sin signo funciona aunque mtime (32 bits bajos)
          * de la vuelta cada ~86 s. */
         if ((uint32_t)(ciclos() - t0) >= un_segundo) {
             t0 += un_segundo;

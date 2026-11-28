@@ -38,3 +38,20 @@ Windows (PowerShell, raíz del repo):
 
 Linux (con Quartus 25.1std instalado): scripts/build-hw.sh y scripts/build-sw.sh hacen lo mismo.
 ```
+
+## Notas de la fase 1 (verificado en la tarjeta, 28-11-2026)
+
+- **El Nios V/m no implementa el CSR `mcycle`** (extensión Zicntr opcional).
+  Leerlo provoca una excepción de instrucción ilegal; el `handle_trap` del HAL
+  ejecuta `ebreak` y, sin depurador, el CPU queda en un bucle de traps con las
+  interrupciones apagadas. Para medir tiempo se usa `mtime`, mapeado en memoria
+  en `CPU_TIMER_SW_AGENT_BASE + 0` (64 bits, cuenta a 50 MHz; `mtimecmp` en +8).
+- **Salida por la JTAG UART con punteros** (`sw/niosv/hw_tests/hola_ptr`):
+  `DATA` en +0 (byte en [7:0]) y `CONTROL` en +4 (`WSPACE` en [31:16]); se
+  espera `WSPACE > 0` antes de escribir. Es el patrón para el software del Nios
+  (la especificación prohíbe `alt_*` e `IOWR`/`IORD`).
+- **Cambiar solo el software** no requiere recompilar todo:
+  `quartus_cdb de1_soc -c de1_soc --update_mif` y `quartus_asm de1_soc -c de1_soc`
+  reemplazan el contenido de la RAM en el `.sof` en menos de un minuto.
+- Programar: `quartus_pgm -c "DE-SoC [USB-1]" -m jtag -o "p;output_files/de1_soc.sof@2"`.
+  Terminal: `juart-terminal -c 1 -d 2 -i 0`.
