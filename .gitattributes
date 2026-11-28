@@ -10,3 +10,4 @@
 *.pdf binary
 *.sof binary
 *.rbf binary
+*.ps1 text eol=crlf

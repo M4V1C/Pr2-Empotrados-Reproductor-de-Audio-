@@ -105,3 +105,9 @@ sim/*.log
 # "*.d" (dependencias de gcc) tambien atrapa el directorio init.d del overlay de Buildroot
 !tools/buildroot/overlay/etc/init.d/
 sim/virtuals.do
+
+# ===== Proyecto Quartus del SoC (hw/quartus) =====
+# Generado por qsys-generate / build-sw.sh: se regenera con los scripts
+hw/quartus/soc_system/
+hw/quartus/nios_ram.hex
+hw/quartus/*.qws
