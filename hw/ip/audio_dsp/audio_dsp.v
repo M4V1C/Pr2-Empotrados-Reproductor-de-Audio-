@@ -7,7 +7,7 @@
 //   * bypass: con CTRL.FIR_EN = 0 muestra pasa sin filtrar
 //   * fir_pbajo: filtro pasa-bajos FIR (fir_pbajo.v)
 //   * ganancia: volumen / potenciómetro (ganancia.v)
-//   * time_7seg: tiempo MM:SS y 7segmentos (time_7seg.v) PENDIENTE: el cuerpo; ahora en 00:00 y apagado
+//   * time_7seg: tiempo MM:SS y 7segmentos (time_7seg.v)
 //
 // -----------------------------------------------------------------------------
 // Interfaces para el Plataform Designer
@@ -219,9 +219,6 @@ module audio_dsp (
 
     // ----------------------------------------------------------------------------------------------
     // Tiempo MM:SS y displays de 7 segmentos (time_7seg.v)
-    // ~~~ OJO ~~~ PENDIENTE: implementar el resto de time_7seg.v
-    //     Esta instancia ya está para los demás archivos entonces la idea es no cambiarlos acá
-    //     Revisar el README.md, seccion 7
     // ----------------------------------------------------------------------------------------------
     wire [14:0] time_mmss;  // [5:0] segundos, [14:8] minutos -> TIME
 

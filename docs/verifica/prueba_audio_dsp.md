@@ -40,9 +40,11 @@ Verificación **aislada** del módulo de hardware personalizado **antes de integ
 | **TC8 (c)** | Escrituras durante el cálculo | Escribir `SAMPLE_IN` y `COEF[0]` mientras el FIR calcula | La escritura **espera** (`waitrequest` > 0); el resultado y el coeficiente quedan correctos | PASS |
 | **TC9** | Ganancia sobre el FIR | Seno a 44.1 kHz con `GAIN` = 2048, 0 y 4096; después `GAIN` = 8191 con muestras extremas | Igual a `sat16((y_modelo × GAIN) >>> 12)`; con ×2 la salida se satura y `SAT` se enciende | PASS |
 | **TC10 (a)** | `FRAME_CNT` y `TIME_CLR` | `FS = 4`; contar 244 pares; `TIME_CLR`; contar con `TIME_EN = 0` | `FRAME_CNT` = 244, 0 tras `TIME_CLR`, y cuenta aunque `TIME_EN = 0` | PASS |
-| **TC10 (b)** | Tiempo MM:SS | `FS = 4`, 244 pares con `TIME_EN = 1` (61 s) | `TIME` = 01:01; 00:00 tras `TIME_CLR` | **PEND**: `time_7seg` todavía está en proceso |
+| **TC10 (b)** | Tiempo MM:SS | `FS = 4`, 244 pares con `TIME_EN = 1` (61 s) | `TIME` = 01:01; 00:00 tras `TIME_CLR` | PASS |
 
-**Resumen:** 18 casos en PASS, 1 pendiente, **0 errores**. Detalle y fecha en `tb_audio_dsp.txt`.
+**Resumen:** 19 casos en PASS, 0 pendientes, **0 errores**. Detalle y fecha en `tb_audio_dsp.txt`.
+
+> TC10 (b) estuvo en `[PEND]` hasta completar `time_7seg` (28-nov) y pasó sin cambiar el testbench.
 
 ## 4. Formas de onda
 
@@ -96,6 +98,7 @@ sim/run_audio_dsp.sh gui   # esta abre el waveform (sim/wave_audio_dsp.do)
 | Prueba | Qué cubre | Resultado |
 |---|---|---|
 | `tb_fir_pbajo.txt` | `fir_pbajo` aislado: 10 032 pares en 3 fs, 67 ciclos por par | PASS |
+| `tb_time_7seg.txt` | `time_7seg` aislado: casos T1–T11 y modelo de referencia en cada ciclo (529 882 ciclos). Ver `hw/ip/audio_dsp/README.md`, sección 7.6 | PASS |
 | `tb_ganancia.txt` | `ganancia` aislada: bordes, ×1 exacto y 20 000 pares aleatorios | PASS |
 | `tb_audio_dsp_humo.txt` | Smoke test inicial de `audio_dsp` | PASS |
 | `test_filters_sw.txt` | Filtros de software del Nios (pasa-banda y eco) en PC host y revisión RV32I | PASS |

@@ -1,4 +1,4 @@
-tb_audio_dsp | commit 5316a43 | 2026-11-26 20:33
+tb_audio_dsp | rama feat/time-7seg (base ed11bcd, time_7seg completo) | 2026-11-28 09:51
 === tb_audio_dsp ===
 [PASS] TC1: ID
 [PASS] TC2: bypass sin espera (2000 pares)
@@ -21,8 +21,7 @@ tb_audio_dsp | commit 5316a43 | 2026-11-26 20:33
 [PASS] TC8: (c) escribir SAMPLE_IN o COEF durante el calculo espera
 [PASS] TC9: GAIN sobre el FIR (x0.5, silencio, x1) y saturacion
 [PASS] TC10: (a) FRAME_CNT y TIME_CLR
-    TIME = 00:00 tras 61 s: time_7seg todavía falta
-[PEND] TC10: (b) TIME MM:SS (time_7seg)
+[PASS] TC10: (b) TIME MM:SS (time_7seg)
 -----------------------------------------
 [PASS] TC1: ID
 [PASS] TC2: bypass sin espera (2000 pares)
@@ -42,8 +41,8 @@ tb_audio_dsp | commit 5316a43 | 2026-11-26 20:33
 [PASS] TC8: (c) escribir SAMPLE_IN o COEF durante el calculo espera
 [PASS] TC9: GAIN sobre el FIR (x0.5, silencio, x1) y saturacion
 [PASS] TC10: (a) FRAME_CNT y TIME_CLR
-[PEND] TC10: (b) TIME MM:SS (time_7seg)
+[PASS] TC10: (b) TIME MM:SS (time_7seg)
 -----------------------------------------
-Errores: 0 | Casos pendientes: 1
+Errores: 0 | Casos pendientes: 0
 RESULTADO: PASS
 -----------------------------------------

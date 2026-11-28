@@ -1,0 +1,30 @@
+tb_time_7seg | rama feat/time-7seg (base ed11bcd) | 2026-11-28 09:54
+=== tb_time_7seg ===
+[PASS] T1: reset -> 00:00 y displays apagados
+[PASS] T2: hex_en = 1 muestra 00 00:00
+[PASS] T3: 00:00 -> 00:01 justo en el pulso fs
+[PASS] T4: acarreos 00:59 -> 01:00 y 09:59 -> 10:00
+[PASS] T5: tope en 99:59
+[PASS] T6: time_clr (tambien junto con tick_par)
+[PASS] T7: tick_par en ciclos consecutivos
+[PASS] T8: hex_en = 0 apaga y el tiempo sigue
+[PASS] T9: decodificador (10 digitos, track 0/7/42/99, 100..127 -> --)
+[PASS] T10: fs = 8000/16000/44100, fs = 0 y cambio de fs
+    T11: tiempo maximo alcanzado 99:59
+[PASS] T11: 300000 ciclos aleatorios contra el modelo
+-------------------------------------------------
+[PASS] T1: reset -> 00:00 y displays apagados
+[PASS] T2: hex_en = 1 muestra 00 00:00
+[PASS] T3: 00:00 -> 00:01 justo en el pulso fs
+[PASS] T4: acarreos 00:59 -> 01:00 y 09:59 -> 10:00
+[PASS] T5: tope en 99:59
+[PASS] T6: time_clr (tambien junto con tick_par)
+[PASS] T7: tick_par en ciclos consecutivos
+[PASS] T8: hex_en = 0 apaga y el tiempo sigue
+[PASS] T9: decodificador (10 digitos, track 0/7/42/99, 100..127 -> --)
+[PASS] T10: fs = 8000/16000/44100, fs = 0 y cambio de fs
+[PASS] T11: 300000 ciclos aleatorios contra el modelo
+-------------------------------------------------
+Ciclos comparados con el modelo: 529882 | errores: 0
+RESULTADO: PASS
+-------------------------------------------------

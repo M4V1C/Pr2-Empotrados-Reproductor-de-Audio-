@@ -1,4 +1,4 @@
-recursos_audio_dsp | commit f5784ff | 2026-11-26 22:05
+recursos_audio_dsp | rama feat/time-7seg (base ed11bcd, time_7seg completo) | 2026-11-28 09:54
 Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
 Dispositivo: Cyclone V 5CSEMA5F31C6 | Reloj: 20.000 ns (50 MHz) en CLOCK_50 | Demas puertos: pines virtuales
 Lineas con 'latch' en la sintesis: 0 | Critical warnings: 0
@@ -6,15 +6,15 @@ Lineas con 'latch' en la sintesis: 0 | Critical warnings: 0
 ==================== FITTER: RESUMEN ====================
 ; Fitter Summary                                                                    ;
 +---------------------------------+-------------------------------------------------+
-; Fitter Status                   ; Successful - Thu Nov 26 22:05:28 2026           ;
+; Fitter Status                   ; Successful - Sat Nov 28 09:54:01 2026           ;
 ; Quartus Prime Version           ; 25.1std.0 Build 1129 10/21/2025 SC Lite Edition ;
 ; Revision Name                   ; audio_dsp                                       ;
 ; Top-level Entity Name           ; audio_dsp                                       ;
 ; Family                          ; Cyclone V                                       ;
 ; Device                          ; 5CSEMA5F31C6                                    ;
 ; Timing Models                   ; Final                                           ;
-; Logic utilization (in ALMs)     ; 937 / 32,070 ( 3 % )                            ;
-; Total registers                 ; 1796                                            ;
+; Logic utilization (in ALMs)     ; 1,032 / 32,070 ( 3 % )                          ;
+; Total registers                 ; 1870                                            ;
 ; Total pins                      ; 1 / 457 ( < 1 % )                               ;
 ; Total virtual pins              ; 116                                             ;
 ; Total block memory bits         ; 512 / 4,065,280 ( < 1 % )                       ;
@@ -33,11 +33,12 @@ Lineas con 'latch' en la sintesis: 0 | Critical warnings: 0
 +-------------------------------------------+----------------------+----------------------------------+---------------------------------------------------+----------------------------------+----------
 ; Compilation Hierarchy Node                ; ALMs needed [=A-B+C] ; [A] ALMs used in final placement ; [B] Estimate of ALMs recoverable by dense packing ; [C] Estimate of ALMs unavailable ; ALMs used
 +-------------------------------------------+----------------------+----------------------------------+---------------------------------------------------+----------------------------------+----------
-; |audio_dsp                                ; 936.5 (197.3)        ; 1104.0 (148.9)                   ; 228.0 (10.7)                                      ; 60.5 (59.0)                      ; 0.0 (0.0)
-;    |fir_pbajo:u_fir|                      ; 739.2 (739.2)        ; 955.1 (955.1)                    ; 217.3 (217.3)                                     ; 1.5 (1.5)                        ; 0.0 (0.0)
+; |audio_dsp                                ; 1031.5 (196.5)       ; 1200.0 (152.7)                   ; 233.5 (14.3)                                      ; 65.0 (58.1)                      ; 0.0 (0.0)
+;    |fir_pbajo:u_fir|                      ; 736.7 (736.7)        ; 945.3 (945.3)                    ; 215.5 (215.5)                                     ; 6.9 (6.9)                        ; 0.0 (0.0)
 ;       |altsyncram:coef_rtl_0|             ; 0.0 (0.0)            ; 0.0 (0.0)                        ; 0.0 (0.0)                                         ; 0.0 (0.0)                        ; 0.0 (0.0)
 ;          |altsyncram_kjn1:auto_generated| ; 0.0 (0.0)            ; 0.0 (0.0)                        ; 0.0 (0.0)                                         ; 0.0 (0.0)                        ; 0.0 (0.0)
 ;    |ganancia:u_gain|                      ; 0.0 (0.0)            ; 0.0 (0.0)                        ; 0.0 (0.0)                                         ; 0.0 (0.0)                        ; 0.0 (0.0)
+;    |time_7seg:u_time|                     ; 98.3 (98.3)          ; 102.0 (102.0)                    ; 3.7 (3.7)                                         ; 0.0 (0.0)                        ; 0.0 (0.0)
 +-------------------------------------------+----------------------+----------------------------------+---------------------------------------------------+----------------------------------+----------
 Note: For table entries with two numbers listed, the numbers in parentheses indicate the number of resources of the given type used by the specific entity alone. The numbers listed outside of parenthe
 
@@ -46,20 +47,20 @@ Note: For table entries with two numbers listed, the numbers in parentheses indi
 +-----------+-----------------+------------+------+
 ; Fmax      ; Restricted Fmax ; Clock Name ; Note ;
 +-----------+-----------------+------------+------+
-; 85.17 MHz ; 85.17 MHz       ; clk        ;      ;
+; 86.87 MHz ; 86.87 MHz       ; clk        ;      ;
 +-----------+-----------------+------------+------+
 ; Slow 1100mV 0C Model Fmax Summary               ;
 +-----------+-----------------+------------+------+
 ; Fmax      ; Restricted Fmax ; Clock Name ; Note ;
 +-----------+-----------------+------------+------+
-; 84.66 MHz ; 84.66 MHz       ; clk        ;      ;
+; 86.36 MHz ; 86.36 MHz       ; clk        ;      ;
 +-----------+-----------------+------------+------+
 ============== TIMING: SETUP (peor caso) ==============
 ; Slow 1100mV 85C Model Setup Summary ;
 +-------+-------+---------------------+
 ; Clock ; Slack ; End Point TNS       ;
 +-------+-------+---------------------+
-; clk   ; 8.259 ; 0.000               ;
+; clk   ; 8.489 ; 0.000               ;
 +-------+-------+---------------------+
 
 ============== TIMING: 5 PEORES CAMINOS ==============
@@ -68,14 +69,13 @@ Note: For table entries with two numbers listed, the numbers in parentheses indi
 +-------+-------------------------+-------------------------+--------------+-------------+--------------+------------+------------+
 ; Slack ; From Node               ; To Node                 ; Launch Clock ; Latch Clock ; Relationship ; Clock Skew ; Data Delay ;
 +-------+-------------------------+-------------------------+--------------+-------------+--------------+------------+------------+
-; 8.259 ; fir_pbajo:u_fir|channel ; fir_pbajo:u_fir|acc[36] ; clk          ; clk         ; 20.000       ; -0.106     ; 11.465     ;
-; 8.289 ; fir_pbajo:u_fir|channel ; fir_pbajo:u_fir|acc[34] ; clk          ; clk         ; 20.000       ; -0.106     ; 11.435     ;
-; 8.319 ; fir_pbajo:u_fir|channel ; fir_pbajo:u_fir|acc[36] ; clk          ; clk         ; 20.000       ; -0.106     ; 11.405     ;
-; 8.333 ; fir_pbajo:u_fir|channel ; fir_pbajo:u_fir|acc[36] ; clk          ; clk         ; 20.000       ; -0.106     ; 11.391     ;
-; 8.337 ; fir_pbajo:u_fir|channel ; fir_pbajo:u_fir|acc[36] ; clk          ; clk         ; 20.000       ; -0.106     ; 11.387     ;
+; 8.489 ; fir_pbajo:u_fir|k[3]    ; fir_pbajo:u_fir|acc[28] ; clk          ; clk         ; 20.000       ; -0.111     ; 11.230     ;
+; 8.496 ; fir_pbajo:u_fir|k[3]    ; fir_pbajo:u_fir|acc[28] ; clk          ; clk         ; 20.000       ; -0.111     ; 11.223     ;
+; 8.517 ; fir_pbajo:u_fir|k[3]    ; fir_pbajo:u_fir|acc[28] ; clk          ; clk         ; 20.000       ; -0.111     ; 11.202     ;
+; 8.529 ; fir_pbajo:u_fir|channel ; fir_pbajo:u_fir|acc[28] ; clk          ; clk         ; 20.000       ; -0.115     ; 11.186     ;
+; 8.536 ; fir_pbajo:u_fir|channel ; fir_pbajo:u_fir|acc[28] ; clk          ; clk         ; 20.000       ; -0.115     ; 11.179     ;
 +-------+-------------------------+-------------------------+--------------+-------------+--------------+------------+------------+
 
 ============== WARNINGS (sintesis, fitter, timing) ==============
       1 Warning (292013): Feature LogicLock is only available with a valid subscription license. You can purchase a software subscription to gain full access to this feature.
       1 Warning (276020): Inferred RAM node "fir_pbajo:u_fir|coef_rtl_0" from synchronous design logic.  Pass-through logic has been added to match the read-during-write behavior of the original design.
-      1 Warning (13024): Output pins are stuck at VCC or GND

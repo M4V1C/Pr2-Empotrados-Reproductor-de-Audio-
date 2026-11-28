@@ -11,7 +11,7 @@
 | Script | `tools/recursos_audio_dsp.sh` |
 | Resumen completo | `docs/verifica/recursos_audio_dsp.txt` |
 
-> `time_7seg` todavía hace falta (salidas constantes), así que no aparece en los recursos. Cuando se complete, volver a correr el script.
+> **Actualizado el 2026-11-28 con `time_7seg` completo.** Los números de las tablas son de esa compilación. Las capturas de pantalla son de la compilación anterior (26-nov, sin `time_7seg`): el análisis no cambia, porque el peor camino sigue siendo el MAC del FIR (ver sección 4).
 
 ## 1. Síntesis
 
@@ -20,7 +20,6 @@
 
 | Warning | Motivo |
 |---|---|
-| 13024: *Output pins are stuck at VCC or GND* (42 pines) | Displays apagados del esqueleto de `time_7seg` |
 | 276020: *Inferred RAM node `coef_rtl_0`* | Los 32 coeficientes se guardan en memoria de bloque (optimización) |
 | 292013: *LogicLock* requiere licencia | Función de la edición de pago y no se está usando |
 
@@ -34,17 +33,18 @@
 
 | Submódulo | ALMs necesarios | ALUTs combinacionales | Registros | Memoria de bloque | M10K | DSP | Qué ocupa |
 |---|---|---|---|---|---|---|---|
-| **`audio_dsp` completo** | **936.5** | **887** | **1796** | 512 bits | **1** | **3** | ~**3 %** de los 32 070 ALMs |
-| └ envoltura `audio_dsp` | 197.3 | 229 | 137 | — | — | — | Decodificación del bus y registros (CTRL, GAIN, FS, TRACK, FRAME_CNT, SAMPLE_IN/OUT) |
-| └ `fir_pbajo` | 739.2 | 658 | 1659 | 512 bits | 1 | 1 | Historial L/R, multiplexores y control del MAC; coeficientes en memoria |
+| **`audio_dsp` completo** | **1031.5** | **1042** | **1870** | 512 bits | **1** | **3** | ~**3 %** de los 32 070 ALMs |
+| └ envoltura `audio_dsp` | 196.5 | 229 | 137 | — | — | — | Decodificación del bus y registros (CTRL, GAIN, FS, TRACK, FRAME_CNT, SAMPLE_IN/OUT) |
+| └ `fir_pbajo` | 736.7 | 655 | 1659 | 512 bits | 1 | 1 | Historial L/R, multiplexores y control del MAC; coeficientes en memoria |
 | └ `ganancia` | 0 | 0 | 0 | — | — | 2 | Los dos multiplicadores caben enteros en bloques DSP |
+| └ `time_7seg` | 98.3 | 158 | 74 | — | — | — | Preescalador (17), contadores BCD (15) y displays registrados (42); decodificadores y conversión BCD → binario |
 
 Los números entre paréntesis de Quartus (los de cada submódulo **solo**) son los de las filas `└`; la fila del módulo completo suma todo.
 
 | Recurso | Usado | Disponible | % |
 |---|---|---|---|
-| ALMs | 936.5 | 32 070 | ~3 % |
-| Registros | 1796 | — | — |
+| ALMs | 1031.5 | 32 070 | ~3 % |
+| Registros | 1870 | — | — |
 | Bloques DSP | 3 | 87 | ~3.4 % |
 | Memoria de bloque | 512 bits (1 de 397 M10K) | 4 065 280 bits | < 0.1 % |
 
@@ -56,10 +56,12 @@ Los números entre paréntesis de Quartus (los de cada submódulo **solo**) son 
 
 | Modelo | Fmax | Reloj del sistema | Holgura (slack) |
 |---|---|---|---|
-| Slow 1100 mV, **85 °C** (peor caso) | **85.17 MHz** | 50 MHz | **+8.259 ns** |
-| Slow 1100 mV, 0 °C | 84.66 MHz | 50 MHz | — |
+| Slow 1100 mV, **85 °C** (peor caso) | **86.87 MHz** | 50 MHz | **+8.489 ns** |
+| Slow 1100 mV, 0 °C | 86.36 MHz | 50 MHz | — |
 
-El módulo funciona a 50 MHz con un **70 % de margen**. El *Multicorner Timing Analysis Summary* (setup, hold, recovery y removal en los cuatro modelos *Slow/Fast* a 85 °C y 0 °C) no reporta problemas.
+Sin `time_7seg` (26-nov) era 85.17 MHz con +8.259 ns: la diferencia es solo de ubicación y ruteo del Fitter.
+
+El módulo funciona a 50 MHz con un **74 % de margen**. El *Multicorner Timing Analysis Summary* (setup, hold, recovery y removal en los cuatro modelos *Slow/Fast* a 85 °C y 0 °C) no reporta problemas.
 
 **Caminos sin restricción.** El reporte marca como *unconstrained* las 41 entradas (`rst`, `avs_address`, `avs_read`, `avs_write`, `avs_writedata`) y las 33 salidas (`avs_readdata`, `avs_waitrequest`) del bus, porque en este proyecto de prueba no hay retardos externos definidos. 
 Es esperado: dentro del sistema que esos puertos se conectan al bus del Nios **dentro del FPGA y con el mismo reloj**, y Platform Designer restringe esos caminos. Todo el tiempo interno del módulo (registro a registro con `clk`) está restringido y cumple con los requisitos de la especificación. 
@@ -72,6 +74,8 @@ No tenemos relojes ilegales ni sin restricción. El MAC en un solo ciclo (multip
 | Slack | Desde | Hasta | Retardo de datos |
 |---|---|---|---|
 | 8.259 ns | `fir_pbajo:u_fir\|channel` | `fir_pbajo:u_fir\|acc[36]` | 11.465 ns |
+
+> Con `time_7seg` (28-nov) los 5 peores caminos siguen dentro del MAC del FIR: el primero va de `u_fir|k[3]` a `u_fir|acc[28]` (slack 8.489 ns, retardo de datos 11.230 ns). `time_7seg` no aparece entre ellos: su camino más largo (preescalador ≥ `fs − 1` → contadores) es mucho más corto que un multiplicador más una suma de 37 bits. El detalle de abajo es el de la compilación del 26-nov y sigue siendo representativo.
 
 El camino critico es el siguiente:
 

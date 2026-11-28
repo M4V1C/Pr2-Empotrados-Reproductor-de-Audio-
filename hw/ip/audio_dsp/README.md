@@ -1,7 +1,7 @@
 # --- Para integración de módulo "audio_dsp" ---
 
 Este es el módulo de HW personalizado del reproductor ya el completo:
-periférico **Avalon-MM esclavo** con el filtro pasa-bajos FIR propio (`fir_pbajo`), bypass, ganancia de volumen (`ganancia`) y tiempo/7 segmentos (PENDIENTE).
+periférico **Avalon-MM esclavo** con el filtro pasa-bajos FIR propio (`fir_pbajo`), bypass, ganancia de volumen (`ganancia`) y tiempo MM:SS con los displays de 7 segmentos (`time_7seg`).
 
 Estos son los archivos que tiene:
 
@@ -10,7 +10,7 @@ Estos son los archivos que tiene:
 | `audio_dsp.v` | Módulo top del componente (bus, registros, camino de la muestra) |
 | `fir_pbajo.v` | Filtro pasa-bajos FIR (instanciado dentro de `audio_dsp`) |
 | `ganancia.v` | Escalamiento de volumen por canal, Q1.12 (instanciado dentro de `audio_dsp`) |
-| `time_7seg.v` | Tiempo MM:SS y displays de 7 segmentos (instanciado dentro de `audio_dsp`). **PENDIENTE**, ver sección 7 |
+| `time_7seg.v` | Tiempo MM:SS y displays de 7 segmentos (instanciado dentro de `audio_dsp`). Ver sección 7 |
 | `audio_dsp_hw.tcl` | Descripción del componente para Platform Designer (interfaces, archivos). Se puede abrir y editar con el *Component Editor* |
 
 > **Acá no se asignan los pines.** Solo son las salidas con nombre (`hex0`..`hex5`). Los pines se asignan en el `.qsf` del proyecto; así si se cambian, este archivo de `audio_dsp.v` no necesita cambiar.
@@ -119,36 +119,23 @@ AUDIO_DSP[SAMPLE_IN] = par;          /* par = R<<16 | L */
 uint32_t y = AUDIO_DSP[SAMPLE_OUT];  /* espera sola si el FIR esta calculando */
 ```
 
-## 6. PENDIENTE 
+## 6. Estado
 
-En esta parte lo que falta es 
+El módulo `time_7seg.v` está completo y ya tiene su cuerpo. `TIME` ya está contando y los displays pasan las pruebas.
 
-| Qué | Dónde | Estado actual |
-|---|---|---|
-| Cuerpo de `time_7seg` (tiempo + displays) | `time_7seg.v`, bloque `>>> PENDIENTE` | `TIME` = 00:00, displays apagados |
-
-`audio_dsp_hw.tcl` ya incluye `time_7seg.v`, así que Platform Designer no se toca. La instancia en `audio_dsp.v`, los puertos, el registro `TIME` y la conexión a los pines ya están definidos, hay que montarse en ellos. Entonces al completar `time_7seg.v` **no cambia** la interfaz del componente ni el mapa de registros.
+Falta solo agregar `audio_dsp` al `.qsys`, exportar el conduit `hex` y asignar los pines HEX0..HEX5 en `hw/quartus/de1_soc.qsf`.
 
 ---
 
-## 7. Pasos para lo del 7 segmentos `time_7seg`
+## 7. Módulo de 7 segmentos `time_7seg`
 
-### 7.1 Qué es lo que hay que hacer?
+### 7.1 Qué hace
 
 Mostrar en los displays el **tiempo de reproducción MM:SS** contando muestras reproducidas (sincronizado con el audio) y el **número de canción**. Todo en hardware: el Nios solo configura registros.
 
-Este es un minidiagrama de como se ve lo que debería hacer este módulo:
+**Por qué contadores BCD:** cada contador ya es un dígito por lo que los displays no necesitan convertir de binario a decimal. Solo el registro `TIME` necesita binario, y la conversión es `decenas × 10 + unidades` con `× 10 = (x << 3) + (x << 1)` las cuales son solamente 2 sumas pequeñas.
 
-```
-tick_par ──► preescalador (cuenta hasta fs) ──► segundos 0..59 ──► minutos 0..99
-                                                     │                  │
-                                                     └──► decenas/unidades ──► decodificador 7 seg ──► HEX1..HEX0 (SS)
-                                                                          └──► decodificador 7 seg ──► HEX3..HEX2 (MM)
-track (0..99) ──► decenas/unidades ──► decodificador 7 seg ──► HEX5..HEX4
-hex_en = 0 ──► todos apagados
-```
-
-### 7.2 Puertos/señales (Son los que puse, la idea es no cambiarlos, porque sino hay que cambiarlos en otros lados varios)
+### 7.2 Puertos
 
 | Puerto | Dir | Ancho | Qué es | Viene de / va a |
 |---|---|---|---|---|
@@ -162,7 +149,7 @@ hex_en = 0 ──► todos apagados
 | `time_mmss` | out | 15 | `[5:0]` segundos, `[14:8]` minutos, **binario**; `[7:6]` = 0 | Registro `TIME` (0x1C) |
 | `hex0`..`hex5` | out | 7 c/u | Segmentos activos en bajo | Pines HEX0..HEX5 (vía conduit `hex`) |
 
-### 7.3 Acá dejo el comportamiento que he estado siguiendo para armar lo demás:
+### 7.3 Comportamiento
 
 1. **Preescalador:** cuenta los pulsos de `tick_par`. Cuando cuenta `fs` pulsos (contador de 0 a `fs − 1`), suma **1 segundo** y vuelve a 0. **No hace falta dividir**: es un contador que se compara con `fs`.
 2. **Hay que contar todos los pulsos.** En modo bypass el Nios puede escribir `SAMPLE_IN` cada 2–3 ciclos de reloj, así que `tick_par` puede llegar casi seguido.
@@ -170,10 +157,9 @@ hex_en = 0 ──► todos apagados
 4. **Segundos 0..59, minutos 0..99.** Al llegar a 99:59 se queda fijo (no vuelve a 00:00). Igual no vamos a poner un audiolibro que dure más de 99horas, entonces todo bien.
 5. **`time_clr` y `rst`:** tiempo a 00:00 y preescalador a 0. Si llega `time_clr` en el mismo ciclo que un `tick_par`, gana `time_clr`.
 6. **`hex_en = 0`:** los 6 displays apagados (`7'h7F`). `time_mmss` sigue contando igual.
-7. **`time_mmss` en binario** (no BCD), porque el software lo lee así. Si internamente se usan contadores BCD (más fácil para los displays), convertir para esta salida: `min = decenas × 10 + unidades`, con `× 10 = (x << 3) + (x << 1)`.
-8. Se recomienda que las salidas `hex*` salgan de **registros** (no combinacionales) para evitar blinks.
+7. **Latencia:** `time_mmss` cambia en el mismo flanco que recibe el pulso; los displays, **un ciclo después** (20 ns), porque salen de registros para no tener glitches en los pines.
 
-### 7.4 Acá dejo esto de los 7 segmentos por si lo quieres agarrar de acá 
+### 7.4 7 segmentos  
 
 Bit 0 = segmento **a**, …, bit 6 = segmento **g**. `0` = encendido.
 
@@ -199,24 +185,49 @@ Bit 0 = segmento **a**, …, bit 6 = segmento **g**. `0` = encendido.
 | 7 | `1111000` | `7'h78` |
 | 8 | `0000000` | `7'h00` |
 | 9 | `0010000` | `7'h10` |
+| `-` (track inválido) | `0111111` | `7'h3F` |
 | apagado | `1111111` | `7'h7F` |
 
-### 7.5 Hacer el Testbench al módulo.
+### 7.5 Uso desde el Nios (al cargar una canción)
 
-Recurde hacerle el Testbench, se puede guiar con los que ya están, la idea es ponerlo en la carpeta sim:
+`TIME_CLR` es un bit de `CTRL` pot lo que al escribirlo hay que repetir los demás bits que deben quedar encendidos:
 
-1. **Testbench unitario** `sim/tb_time_7seg.sv` (sugerido), con un `fs` pequeño (por ejemplo `fs = 4`) para no esperar 44 100 pulsos por segundo. Acá están estos casos mínimos para probar:
-   - avance 00:00 → 00:01 tras `fs` pulsos;
-   - paso 00:59 → 01:00;
-   - tope en 99:59;
-   - `time_clr` (también coincidiendo con `tick_par`);
-   - `tick_par` en ciclos consecutivos;
-   - `hex_en = 0` apaga todo;
-   - los 10 dígitos del decodificador y `track` = 0, 7, 42, 99.
-2. **Integración:** `sim/run_audio_dsp.sh` ya compila `time_7seg.v`. La prueba del módulo completo por el bus (registro `TIME`) la hace quien verifica `audio_dsp`, pero si ya está todo puedes probarlo también.
+```c
+AUDIO_DSP[FS] = fs;
+AUDIO_DSP[TRACK] = numero;
+AUDIO_DSP[CTRL] = (fir ? 0x01 : 0) | 0x04 | 0x08 | 0x10;
+// cada par escrito a SAMPLE_IN suma al tiempo, en pausa el tiempo se congela
+uint32_t t = AUDIO_DSP[TIME];
+uint32_t mm = (t >> 8) & 0x7F, ss = t & 0x3F;
+```
 
-### 7.6 Qué NO hay que cambiar
+### 7.6 Verificación
 
-- `audio_dsp.v`: la instancia `u_time` ya está conectada.
-- Platform Designer: los displays ya salen por el conduit `hex` de `audio_dsp`.
-- El mapa de registros: `FS`, `TIME`, `TRACK`, `TIME_EN`, `TIME_CLR` y `HEX_EN` ya existen.
+**Testbench unitario:** `sim/tb_time_7seg.sv`, resultado en `docs/verifica/tb_time_7seg.txt`. Verifica de dos formas a la vez:
+
+- **Modelo de referencia en cada ciclo:** el testbench cuenta los segundos totales en binario (otra forma de contar, sin BCD) y compara `time_mmss` y los 6 displays en **todos** los ciclos de la simulación (529 882).
+- **Casos dirigidos** con valores absolutos, por si el modelo tuviera el mismo error que el RTL.
+
+| Caso | Qué verifica | Resultado |
+|---|---|---|
+| T1 | Reset: 00:00 y displays apagados | PASS |
+| T2 | `hex_en = 1` muestra `00 00:00` | PASS |
+| T3 | 00:00 → 00:01 justo en el pulso `fs` (no en el `fs − 1`) | PASS |
+| T4 | Acarreos 00:59 → 01:00 y 09:59 → 10:00 | PASS |
+| T5 | Tope en 99:59 | PASS |
+| T6 | `time_clr`, también en el mismo ciclo que el pulso que completaría el segundo (y el preescalador queda en 0) | PASS |
+| T7 | `tick_par` en ciclos consecutivos | PASS |
+| T8 | `hex_en = 0` apaga todo y el tiempo sigue contando | PASS |
+| T9 | Los 10 dígitos, `track` = 0, 7, 42, 99 y barrido 0..127 (100..127 → `--`) | PASS |
+| T10 | `fs` reales (8000, 16000, 44100), `fs = 0` y `fs` que baja a mitad de un segundo | PASS |
+| T11 | 300 000 ciclos aleatorios (pulsos, `time_clr`, `hex_en`, `track`, `fs`) contra el modelo; llega hasta 99:59 | PASS |
+
+El testbench detecta errores: Se metieron a propósito 7 errores en el RTL, uno a la vez, y el testbench marcó FAIL en los 7: decenas de segundo hasta 6, completar el segundo en `fs` en vez de `fs − 1`, sin tope, `tick_par` ganándole a `time_clr`, el dígito 7 mal decodificado, el corte de las decenas de `track` corrido y `hex_en` ignorado.
+
+```bash
+# Desde: raíz del repo
+source scripts/env.sh
+sim/run_time_7seg.sh # consola; log en sim/time_7seg.log
+sim/run_time_7seg.sh gui # formas de onda (sim/wave_time_7seg.do): displays como dígitos y marcadores T3..T6
+sim/run_audio_dsp.sh # módulo completo por el bus
+```
